@@ -1,6 +1,6 @@
 # Crossmodal-Connectors
 
-# Data prep
+# Data
 
 1. Expand COCO(Xv image,Xc caption) to "Human : Xq Xv<STOP> Assistant : Xc<STOP>" where Xq is a set of basic questions like "Describe this image" answer to which is very likely in Xc.
 2. Improve the expanded dataset, pass the bounding box coordinates + caption + few shot examples* to gpt4. This is done to create 3 types of datasets: 
@@ -10,6 +10,13 @@
 
 
 examples*: They are the only human annotations during data collection used as seed examples in in-context-learning to query GPT-4
+
+# Training
+
+First the projection matrix W is trained so that the clip embeddings of an image are in the same space as the word embeddings.
+This is called Stage 1: Pre-training for Feature Alignment and done at pretrain.py
+
+Second is the fine tuning.
 
 # Model builder
            +-------------------+
