@@ -1,5 +1,13 @@
 # Crossmodal-Connectors
 
+# LLaVA design
+
+user image -> clip -> projection matrix is W -> Hv 
+user text  -> += Hv -> LLM input
+LLM is ViCuna paramaterized by φ -> output
+
+Only W and φ are updated.
+
 # Data
 
 1. Expand COCO(Xv image,Xc caption) to "Human : Xq Xv<STOP> Assistant : Xc<STOP>" where Xq is a set of basic questions like "Describe this image" answer to which is very likely in Xc.
