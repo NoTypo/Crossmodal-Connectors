@@ -89,3 +89,8 @@ examples*: They are the only human annotations during data collection used as se
                     | model, image_proc,|
                     | context_len       |
                     +-------------------+
+
+
+# Input to Casual LM autoregressive
+[Emb[<s>], Emb[A], Emb[cat], ..., ImgCLIPEmb[features], Emb[.]]
+
