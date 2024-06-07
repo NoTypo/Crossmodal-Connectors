@@ -1,6 +1,6 @@
 # Crossmodal-Connectors
 
-## Data prep
+# Data prep
 
 1. Expand COCO(Xv image,Xc caption) to "Human : Xq Xv<STOP> Assistant : Xc<STOP>" where Xq is a set of basic questions like "Describe this image" answer to which is very likely in Xc.
 2. Improve the expanded dataset, pass the bounding box coordinates + caption + few shot examples* to gpt4. This is done to create 3 types of datasets: 
@@ -10,3 +10,82 @@
 
 
 examples*: They are the only human annotations during data collection used as seed examples in in-context-learning to query GPT-4
+
+# Model builder
+           +-------------------+
+           |      Start        |
+           +-------------------+
+                    |
+                    v
+           +-------------------+
+           | Init kwargs       |
+           +-------------------+
+                    |
+                    v
+           +-------------------+
+           | Check device      |
+           | Set device_map    |
+           +-------------------+
+                    |
+                    v
+           +-------------------+
+           | Check 8bit        |
+           | Set load_in_8bit  |
+           +-------------------+
+                    |
+                    v
+           +-------------------+
+           | Check 4bit        |
+           | Set load_in_4bit  |
+           | Set quant config  |
+           +-------------------+
+                    |
+                    v
+           +-------------------+
+           | Set torch_dtype   |
+           +-------------------+
+                    |
+                    v
+           +-------------------+
+           | Check flash attn  |
+           | Set attn impl     |
+           +-------------------+
+                    |
+                    v
+           +-------------------+
+           | Check llava       |
+           +-------------------+
+                    |
+                    +------------------+
+                    |                  |
+                    v                  v
+        +-------------------+      +-------------------+
+        | Check lora        |      |  Base provided    |
+        | No base           |      +-------------------+
+        +-------------------+                  |
+                    |                          v
+                    v               +-------------------+
++------------------------+          | Load LLaVA        |
+|  Warn about base      |           | from base         |
++------------------------+          | model, config     |
+                    |                          |
+                    v                          v
+        +-------------------+      +-------------------+
+        | Check lm_head     |      | Load LLaVA weights|
+        | shape, update     |      +-------------------+
+        +-------------------+                  |
+                    |                          |
+                    v                          v
+        +-------------------+      +-------------------+
+        | Load LLaVA        |      | Load LoRA weights |
+        | weights           |      | Merge and unload  |
+        +-------------------+      +-------------------+
+                    |                          |
+                    +--------------------------+
+                               |
+                               v
+                    +-------------------+
+                    | Return tokenizer, |
+                    | model, image_proc,|
+                    | context_len       |
+                    +-------------------+
