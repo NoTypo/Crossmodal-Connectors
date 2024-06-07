@@ -93,4 +93,5 @@ examples*: They are the only human annotations during data collection used as se
 
 # Input to Casual LM autoregressive
 [Emb[<s>], Emb[A], Emb[cat], ..., ImgCLIPEmb[features], Emb[.]]
+produced on the fly at LazySupervisedDataset
 
