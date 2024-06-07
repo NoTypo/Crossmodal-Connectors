@@ -1,5 +1,8 @@
 # Crossmodal-Connectors
 
+Q1. Does φ learn how to decode positional information from the CLIP derived vectors? (COCO subject coordinates were used in training)
+
+
 # LLaVA design
 
 user image -> clip -> projection matrix is W -> Hv 
