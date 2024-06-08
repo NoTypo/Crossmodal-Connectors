@@ -1,6 +1,7 @@
 # Crossmodal-Connectors
 
 Q1. Does φ learn how to decode positional information from the CLIP derived vectors? (COCO subject coordinates were used in training)
+Q2. Which data file contains the symbolic representation from COCO?
 
 
 # LLaVA design
@@ -33,6 +34,38 @@ Row 1 in blip_laion_cc_sbu_558k.json
 {'conversations': [{'from': 'human', 'value': 'Write a terse but informative summary of the picture.\n<image>'}, {'from': 'gpt', 'value': 'a grey watch with an army style strap'}], 'image': '00223/002239345.jpg', 'id': '002239345'}
 
 Second is the fine tuning.
+head -c 1000 LLaVA-Instruct-150K/llava_v1_5_mix665k.json
+[
+  {
+    "id": "000000033471",
+    "image": "coco/train2017/000000033471.jpg",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nWhat are the colors of the bus in the image?"
+      },
+      {
+        "from": "gpt",
+        "value": "The bus in the image is white and red."
+      },
+      {
+        "from": "human",
+        "value": "What feature can be seen on the back of the bus?"
+      },
+      {
+        "from": "gpt",
+        "value": "The back of the bus features an advertisement."
+      },
+      {
+        "from": "human",
+        "value": "Is the bus driving down the street or pulled off to the side?"
+      },
+      {
+        "from": "gpt",
+        "value": "The bus is driving down the street, which is crowded with people and other vehicles."
+      }
+    ]
+  }
 
 ## Appendix
 examples*: They are the only human annotations during data collection used as seed examples when querying GPT-4
