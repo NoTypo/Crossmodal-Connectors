@@ -26,6 +26,12 @@ Input to Casual(means autoregressive) LM: [Emb[<s>], Emb[A], Emb[cat], ..., ImgC
 First the projection matrix W is trained so that the clip embeddings of an image are in the same space as the word embeddings.
 This is called Stage 1: Pre-training for Feature Alignment and done at pretrain.py
 
+LAION-CC-SBU dataset with BLIP captions
+Row 1 in blip_laion_cc_sbu_558k_meta.json 
+{'url': 'https://ak1.ostkcdn.com/images/products/11932255/P18821274.jpg', 'blip_caption': 'a grey watch with an army style strap', 'image': '00223/002239345.jpg', 'id': '002239345'}
+Row 1 in blip_laion_cc_sbu_558k.json
+{'conversations': [{'from': 'human', 'value': 'Write a terse but informative summary of the picture.\n<image>'}, {'from': 'gpt', 'value': 'a grey watch with an army style strap'}], 'image': '00223/002239345.jpg', 'id': '002239345'}
+
 Second is the fine tuning.
 
 ## Appendix
