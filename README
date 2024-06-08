@@ -1,7 +1,8 @@
 # Crossmodal-Connectors
 
 Q1. Does φ learn how to decode positional information from the CLIP derived vectors? (COCO subject coordinates were used in training)
-Q2. Which data file contains the symbolic representation from COCO?
+Q2. Which data file contains the symbolic representation from COCO? Ans: llava_v1_5_mix665k.json
+Q3. How was llava_v1_5_mix665k.json created?
 
 
 # LLaVA design
