@@ -67,6 +67,8 @@ head -c 1000 LLaVA-Instruct-150K/llava_v1_5_mix665k.json
     ]
   }
 
+grep -m 50 "bounding box coordinate" LLaVA-Instruct-150K/llava_v1_5_mix665k.json
+
 ## Appendix
 examples*: They are the only human annotations during data collection used as seed examples when querying GPT-4
 
