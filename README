@@ -73,6 +73,80 @@ grep -m 50 "bounding box coordinate" LLaVA-Instruct-150K/llava_v1_5_mix665k.json
 ## Appendix
 examples*: They are the only human annotations during data collection used as seed examples when querying GPT-4
 
+Merging image with the text by cur_new_input_embeds.append(cur_image_features). Below is the full method
+function prepare_inputs_labels_for_multimodal(input_ids, 
+                                            position_ids, 
+                                            attention_mask, 
+                                            past_key_values, 
+                                            labels, images, 
+                                            image_sizes):
+  
+  ┌───────────────────────────────────────────────┐
+  │ if vision_tower is None or                    │
+  │    images is None or                          │
+  │    input_ids has only one column:             │
+  │    └─ return input_ids, position_ids,         │
+  │           attention_mask, past_key_values,    │
+  │           None, labels                        │
+  └───────────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────────┐
+  │ if images is a list or has 5 dimensions:      │
+  │    ├─ concatenate and encode images           │
+  │    └─ split image features                    │
+  │        └─ if merge type is 'flat':            │
+  │              └─ flatten image features        │
+  │           else if merge type is 'spatial':    │
+  │              └─ process image features        │
+  │                 spatially                     │
+  │           else:                               │
+  │              └─ raise ValueError              │
+  └───────────────────────────────────────────────┘
+  │ else:                                         │
+  │    └─ encode images                           │
+  └───────────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────────┐
+  │ if tune_mm_mlp_adapter and mm_use_im_start_end│
+  │    └─ raise NotImplementedError               │
+  └───────────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────────┐
+  │ setup dummy tensors for                       │
+  │ labels, position_ids, attention_mask          │
+  └───────────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────────┐
+  │ remove padding from input_ids and labels      │
+  │ using attention_mask                          │
+  └───────────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────────┐
+  │ initialize new_input_embeds and new_labels    │
+  └───────────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────────┐
+  │ for each batch:                               │
+  │    ├─ process input_ids                       │
+  │    ├─ handle images                           │
+  │    └─ concatenate embeddings and update labels│
+  └───────────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────────┐
+  │ truncate sequences to max length              │
+  └───────────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────────┐
+  │ combine new_input_embeds and new_labels       │
+  │ into padded versions                          │
+  └───────────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────────┐
+  │ return final tensors (input_embeds,           │
+  │ position_ids, attention_mask,                 │
+  │ past_key_values, labels)                      │
+  └───────────────────────────────────────────────┘
+
 
 Model builder
            +-------------------+
