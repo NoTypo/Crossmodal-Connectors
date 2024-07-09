@@ -5,7 +5,7 @@ Q2. Which data file contains the symbolic representation from COCO? Ans: llava_v
 Q3. How was llava_v1_5_mix665k.json created?
 
 
-# LLaVA design
+# LLaVA(https://github.com/NoTypo/LLaVA) design
 
 user image -> clip -> projection matrix is W -> Hv 
 user text  -> += Hv -> LLM input
