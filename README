@@ -7,7 +7,8 @@ W and φ are updated.
 
 Data
 ======
-1. Expand COCO(Xv image,Xc caption) to "Human : Xq Xv Assistant : Xc<STOP>" where Xq is a set of basic questions like "Describe this image" answer to which is very likely in Xc.
+1. Expand COCO(Xv image,Xc caption) to "Human : Xq Xv Assistant : Xc<STOP>" 
+where Xq is a set of basic questions like "Describe this image" answer to which is very likely in Xc.
 2. Improve the expanded dataset, pass the bounding box coordinates + caption + few shot examples* to gpt4. 
 
 Using above, create 3 types of datasets: 
@@ -15,7 +16,8 @@ Using above, create 3 types of datasets:
     - Detailed descrption
     - Complex reasoning
 
-Input to casual(means autoregressive) LM: [Emb[<s>], Emb[A], Emb[cat], ..., ImgCLIPEmb[features], Emb[.]] is produced on the fly at LazySupervisedDataset
+Input to casual(means autoregressive) LM: [Emb[<s>], Emb[A], Emb[cat], ..., ImgCLIPEmb[features], Emb[.]] 
+is produced on the fly at LazySupervisedDataset
 
 # Training
 First the projection matrix W is trained so that the clip embeddings of an image are in the same space as the word embeddings.
