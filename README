@@ -1,38 +1,36 @@
-# Crossmodal-Connectors
+LLaVA design
+============
+Image ----> Clip (768 dim vector) ----> projection matrix W -> V_img 
+Prompt ---> Vicuna encoder φ ----> V_text
 
-Q1. Does φ learn how to decode positional information from the CLIP derived vectors? (COCO subject coordinates were used in training)
-Q2. Which data file contains the symbolic representation from COCO? Ans: llava_v1_5_mix665k.json
-Q3. How was llava_v1_5_mix665k.json created?
+W and φ are updated.
 
+Data
+======
+1. Expand COCO(Xv image,Xc caption) to "Human : Xq Xv Assistant : Xc<STOP>" where Xq is a set of basic questions like "Describe this image" answer to which is very likely in Xc.
+2. Improve the expanded dataset, pass the bounding box coordinates + caption + few shot examples* to gpt4. 
 
-# LLaVA(https://github.com/NoTypo/LLaVA) design
-
-user image -> clip -> projection matrix is W -> Hv 
-user text  -> += Hv -> LLM input
-LLM is ViCuna paramaterized by φ -> output
-
-Only W and φ are updated.
-
-# Data
-
-1. Expand COCO(Xv image,Xc caption) to "Human : Xq Xv<STOP> Assistant : Xc<STOP>" where Xq is a set of basic questions like "Describe this image" answer to which is very likely in Xc.
-2. Improve the expanded dataset, pass the bounding box coordinates + caption + few shot examples* to gpt4. This is done to create 3 types of datasets: 
+Using above, create 3 types of datasets: 
     - Conversation
     - Detailed descrption
     - Complex reasoning
 
-Input to Casual(means autoregressive) LM: [Emb[<s>], Emb[A], Emb[cat], ..., ImgCLIPEmb[features], Emb[.]] is produced on the fly at LazySupervisedDataset
+Input to casual(means autoregressive) LM: [Emb[<s>], Emb[A], Emb[cat], ..., ImgCLIPEmb[features], Emb[.]] is produced on the fly at LazySupervisedDataset
 
 # Training
-
 First the projection matrix W is trained so that the clip embeddings of an image are in the same space as the word embeddings.
 This is called Stage 1: Pre-training for Feature Alignment and done at pretrain.py
 
 LAION-CC-SBU dataset with BLIP captions
 Row 1 in blip_laion_cc_sbu_558k_meta.json 
-{'url': 'https://ak1.ostkcdn.com/images/products/11932255/P18821274.jpg', 'blip_caption': 'a grey watch with an army style strap', 'image': '00223/002239345.jpg', 'id': '002239345'}
+{
+    'url': 'https://ak1.ostkcdn.com/images/products/11932255/P18821274.jpg', 
+    'blip_caption': 'a grey watch with an army style strap', 
+    'image': '00223/002239345.jpg', 'id': '002239345'
+}
 Row 1 in blip_laion_cc_sbu_558k.json
-{'conversations': [{'from': 'human', 'value': 'Write a terse but informative summary of the picture.\n<image>'}, {'from': 'gpt', 'value': 'a grey watch with an army style strap'}], 'image': '00223/002239345.jpg', 'id': '002239345'}
+{'conversations': [{'from': 'human', 'value': 'Write a terse but informative summary of the picture.\n<image>'}, 
+{'from': 'gpt', 'value': 'a grey watch with an army style strap'}], 'image': '00223/002239345.jpg', 'id': '002239345'}
 
 Second is the fine tuning.
 head -c 1000 LLaVA-Instruct-150K/llava_v1_5_mix665k.json
@@ -49,187 +47,25 @@ head -c 1000 LLaVA-Instruct-150K/llava_v1_5_mix665k.json
         "from": "gpt",
         "value": "The bus in the image is white and red."
       },
-      {
-        "from": "human",
-        "value": "What feature can be seen on the back of the bus?"
-      },
-      {
-        "from": "gpt",
-        "value": "The back of the bus features an advertisement."
-      },
-      {
-        "from": "human",
-        "value": "Is the bus driving down the street or pulled off to the side?"
-      },
-      {
-        "from": "gpt",
-        "value": "The bus is driving down the street, which is crowded with people and other vehicles."
-      }
     ]
   }
 
 grep -m 50 "bounding box coordinate" LLaVA-Instruct-150K/llava_v1_5_mix665k.json
 
-## Appendix
 examples*: They are the only human annotations during data collection used as seed examples when querying GPT-4
 
 Merging image with the text by cur_new_input_embeds.append(cur_image_features).
+
 The image features are flattened so that we can get a single vector to do the dot products across the heads.
-image_features = [x.flatten(0, 1) for x in image_features]
-Below is the full method
+image_features = [x.flatten(0, 1) for x in image_features]. Below is the full method
 function prepare_inputs_labels_for_multimodal(input_ids, 
                                             position_ids, 
                                             attention_mask, 
                                             past_key_values, 
                                             labels, images, 
                                             image_sizes):
-  
-  ┌───────────────────────────────────────────────┐
-  │ if vision_tower is None or                    │
-  │    images is None or                          │
-  │    input_ids has only one column:             │
-  │    └─ return input_ids, position_ids,         │
-  │           attention_mask, past_key_values,    │
-  │           None, labels                        │
-  └───────────────────────────────────────────────┘
 
-  ┌───────────────────────────────────────────────┐
-  │ if images is a list or has 5 dimensions:      │
-  │    ├─ concatenate and encode images           │
-  │    └─ split image features                    │
-  │        └─ if merge type is 'flat':            │
-  │              └─ flatten image features        │
-  │           else if merge type is 'spatial':    │
-  │              └─ process image features        │
-  │                 spatially                     │
-  │           else:                               │
-  │              └─ raise ValueError              │
-  └───────────────────────────────────────────────┘
-  │ else:                                         │
-  │    └─ encode images                           │
-  └───────────────────────────────────────────────┘
-
-  ┌───────────────────────────────────────────────┐
-  │ if tune_mm_mlp_adapter and mm_use_im_start_end│
-  │    └─ raise NotImplementedError               │
-  └───────────────────────────────────────────────┘
-
-  ┌───────────────────────────────────────────────┐
-  │ setup dummy tensors for                       │
-  │ labels, position_ids, attention_mask          │
-  └───────────────────────────────────────────────┘
-
-  ┌───────────────────────────────────────────────┐
-  │ remove padding from input_ids and labels      │
-  │ using attention_mask                          │
-  └───────────────────────────────────────────────┘
-
-  ┌───────────────────────────────────────────────┐
-  │ initialize new_input_embeds and new_labels    │
-  └───────────────────────────────────────────────┘
-
-  ┌───────────────────────────────────────────────┐
-  │ for each batch:                               │
-  │    ├─ process input_ids                       │
-  │    ├─ handle images                           │
-  │    └─ concatenate embeddings and update labels│
-  └───────────────────────────────────────────────┘
-
-  ┌───────────────────────────────────────────────┐
-  │ truncate sequences to max length              │
-  └───────────────────────────────────────────────┘
-
-  ┌───────────────────────────────────────────────┐
-  │ combine new_input_embeds and new_labels       │
-  │ into padded versions                          │
-  └───────────────────────────────────────────────┘
-
-  ┌───────────────────────────────────────────────┐
-  │ return final tensors (input_embeds,           │
-  │ position_ids, attention_mask,                 │
-  │ past_key_values, labels)                      │
-  └───────────────────────────────────────────────┘
-
-
-Model builder
-           +-------------------+
-           |      Start        |
-           +-------------------+
-                    |
-                    v
-           +-------------------+
-           | Init kwargs       |
-           +-------------------+
-                    |
-                    v
-           +-------------------+
-           | Check device      |
-           | Set device_map    |
-           +-------------------+
-                    |
-                    v
-           +-------------------+
-           | Check 8bit        |
-           | Set load_in_8bit  |
-           +-------------------+
-                    |
-                    v
-           +-------------------+
-           | Check 4bit        |
-           | Set load_in_4bit  |
-           | Set quant config  |
-           +-------------------+
-                    |
-                    v
-           +-------------------+
-           | Set torch_dtype   |
-           +-------------------+
-                    |
-                    v
-           +-------------------+
-           | Check flash attn  |
-           | Set attn impl     |
-           +-------------------+
-                    |
-                    v
-           +-------------------+
-           | Check llava       |
-           +-------------------+
-                    |
-                    +------------------+
-                    |                  |
-                    v                  v
-        +-------------------+      +-------------------+
-        | Check lora        |      |  Base provided    |
-        | No base           |      +-------------------+
-        +-------------------+                  |
-                    |                          v
-                    v               +-------------------+
-+------------------------+          | Load LLaVA        |
-|  Warn about base      |           | from base         |
-+------------------------+          | model, config     |
-                    |                          |
-                    v                          v
-        +-------------------+      +-------------------+
-        | Check lm_head     |      | Load LLaVA weights|
-        | shape, update     |      +-------------------+
-        +-------------------+                  |
-                    |                          |
-                    v                          v
-        +-------------------+      +-------------------+
-        | Load LLaVA        |      | Load LoRA weights |
-        | weights           |      | Merge and unload  |
-        +-------------------+      +-------------------+
-                    |                          |
-                    +--------------------------+
-                               |
-                               v
-                    +-------------------+
-                    | Return tokenizer, |
-                    | model, image_proc,|
-                    | context_len       |
-                    +-------------------+
-
-
-
+Sources
+=======
+Default size of clip embeddings (768) is used: https://github.com/huggingface/transformers/blob/85345bb439652d3f03bb4e123cef7a440f2ba95b/src/transformers/models/clip/configuration_clip.py#L163
 
